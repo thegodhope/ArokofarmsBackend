@@ -1,0 +1,56 @@
+const Subscription = require('../models/Subscription');
+
+exports.createSubscription = async (req, res) => {
+  try {
+
+    // Safely access files
+    const idFile = req.files?.idFile ? req.files.idFile[0].path : null;
+    const passportPhoto = req.files?.passportPhoto ? req.files.passportPhoto[0].path : null;
+    const receiptFile = req.files?.receiptFile ? req.files.receiptFile[0].path : null;
+
+    // Safely parse JSON fieldsJSON
+    const personalInfo = req.body.personalInfo? JSON.parse(req.body.personalInfo) : {};
+    const nextOfKin = req.body.nextOfKin ? JSON.parse(req.body.nextOfKin) : {};
+    const identification = req.body.identification ? JSON.parse(req.body.identification) : {};
+    const subscriptionDetails = req.body.subscriptionDetails ? JSON.parse(req.body.subscriptionDetails) : {};
+    const payment = req.body.payment ? JSON.parse(req.body.payment) : {};
+
+    const subscriptionData = {
+      personalInfo: {
+        ...personalInfo,
+        // Only add email if it exists in input
+        email: personalInfo.email || null,
+      },
+      nextOfKin,
+      identification: {
+        ...identification,
+        idFile,
+        passportPhoto
+      },
+      subscriptionDetails,
+      payment: {
+        ...payment,
+        receiptFile
+      }
+    };
+
+    const newSubscription = new Subscription(subscriptionData);
+
+    const savedSubscription = await newSubscription.save();
+
+    return res.status(201).json({
+      message: "Subscription created successfully",
+      data: savedSubscription
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Error creating subscription",
+      error: error.message
+    });
+
+  }
+};
