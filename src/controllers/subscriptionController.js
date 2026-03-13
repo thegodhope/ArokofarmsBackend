@@ -8,18 +8,30 @@ exports.createSubscription = async (req, res) => {
     const passportPhoto = req.files?.passportPhoto ? req.files.passportPhoto[0].path : null;
     const receiptFile = req.files?.receiptFile ? req.files.receiptFile[0].path : null;
 
-    // Safely parse JSON fieldsJSON
-    const personalInfo = req.body.personalInfo? JSON.parse(req.body.personalInfo) : {};
-    const nextOfKin = req.body.nextOfKin ? JSON.parse(req.body.nextOfKin) : {};
-    const identification = req.body.identification ? JSON.parse(req.body.identification) : {};
-    const subscriptionDetails = req.body.subscriptionDetails ? JSON.parse(req.body.subscriptionDetails) : {};
-    const payment = req.body.payment ? JSON.parse(req.body.payment) : {};
+    let personalInfo = {}, nextOfKin = {}, identification = {}, subscriptionDetails = {}, payment = {};
+    
+    try {
+      personalInfo = req.body.personalInfo ? JSON.parse(req.body.personalInfo) : {};
+      nextOfKin = req.body.nextOfKin ? JSON.parse(req.body.nextOfKin) : {};
+      identification = req.body.identification ? JSON.parse(req.body.identification) : {};
+      subscriptionDetails = req.body.subscriptionDetails ? JSON.parse(req.body.subscriptionDetails) : {};
+      payment = req.body.payment ? JSON.parse(req.body.payment) : {};
+    } catch (parseError) {
+      return res.status(400).json({
+        message: "Invalid JSON format in form fields",
+        error: parseError.message
+      });
+    }
+
+    console.log("personalInfo", personalInfo);
+    console.log("nextOfKin", nextOfKin);
+    console.log("identification", identification);
+    console.log("subscriptionDetails", subscriptionDetails);
+    console.log("payment", payment);
 
     const subscriptionData = {
       personalInfo: {
         ...personalInfo,
-        // Only add email if it exists in input
-        email: personalInfo.email || null,
       },
       nextOfKin,
       identification: {
@@ -47,9 +59,17 @@ exports.createSubscription = async (req, res) => {
 
     console.error(error);
 
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        message: "Validation Error",
+        errors: messages
+      });
+    }
+
     return res.status(500).json({
       message: "Error creating subscription",
-      error: error.message
+      error: "Internal server error"
     });
 
   }

@@ -12,6 +12,31 @@ app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+// Swagger setup
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Aroko API',
+      version: '1.0.0',
+      description: 'API Documentation for the Aroko Subscription API',
+    },
+    servers: [
+      {
+        url: `http://localhost:${port}`,
+        description: 'Development server',
+      },
+    ],
+  },
+  apis: ['./src/routes/*.js'], // Files containing annotations
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 app.use('/uploads', express.static('uploads')); // Make uploads folder public
 app.use('/api/subscriptions', subscriptionRoutes);
 app.get('/api/test', (req, res) => {
